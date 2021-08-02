@@ -6,8 +6,8 @@ const resolvers = {
     //   reads request header for jwt
     me: async (parent, args, context) => {
       if (context.user) {
-        const userData = await User.findOne({ _id: context.user._id })
-        .select("-__v -password");
+        const userData = await User.findOne({ _id: context.user._id }).select('-_v -password');
+
         // .populate("books");
 
         return userData;
@@ -15,6 +15,7 @@ const resolvers = {
       throw new AuthenticationError("Not logged in");
     },
   },
+
   Mutation: {
     login: async (parent, { email, password }) => {
       const user = await User.findOne({ email });
@@ -28,8 +29,8 @@ const resolvers = {
       const token = signToken(user);
       return { token, user };
     },
-    addUser: async (parent, args) => {
-      const user = await User.create(args);
+    addUser: async (parent, { username, email, password }) => {
+      const user = await User.create({ username, email, password});
       const token = signToken(user);
       return { token, user };
     },
@@ -39,12 +40,12 @@ const resolvers = {
       if (context.user) {
         const updatedUser = await User.findByIdAndUpdate(
           { _id: context.user._id },
-          { $addToSet: { savedBooks: bookData } },
+          { $push: { savedBooks: bookData } },
           { new: true }
         );
         return updatedUser;
       }
-      throw new AuthenticationError("You need to be logged in!");
+      throw new AuthenticationError("You must be logged in!");
     },
     removeBook: async (parent, { bookId }, context) => {
       if (context.user) {
@@ -55,8 +56,9 @@ const resolvers = {
         );
         return updatedUser;
       }
-      throw new AuthenticationError("You need to be logged in!");
+      throw new AuthenticationError("You must be logged in!");
     },
   },
 };
+
 module.exports = resolvers;
